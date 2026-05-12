@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Tracker | 50-30-20 Rule</title>
+    <meta name="description" content="Dynamic personal finance tracker following the 50-30-20 budgeting rule">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Mobile Menu Toggle -->
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu">☰</button>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">₹</span>
+                    <span class="logo-text">FinTrack</span>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active" data-tab="dashboard" id="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-tab="expenses" id="nav-expenses"><span class="nav-icon">💸</span> Expenses</a></li>
+                <li><a href="#" class="nav-link" data-tab="budget" id="nav-budget"><span class="nav-icon">🎯</span> Budget Setup</a></li>
+                <li><a href="#" class="nav-link" data-tab="emi" id="nav-emi"><span class="nav-icon">🏦</span> EMI Tracker</a></li>
+                <li><a href="#" class="nav-link" data-tab="bike" id="nav-bike"><span class="nav-icon">🏍️</span> Bike Costs</a></li>
+                <li><a href="#" class="nav-link" data-tab="afford" id="nav-afford"><span class="nav-icon">🧮</span> Affordability</a></li>
+                <li><a href="#" class="nav-link" data-tab="statements" id="nav-statements"><span class="nav-icon">📎</span> Import</a></li>
+                <li><a href="#" class="nav-link" data-tab="patterns" id="nav-patterns"><span class="nav-icon">📈</span> Patterns</a></li>
+                <li><a href="#" class="nav-link" data-tab="monthly" id="nav-monthly"><span class="nav-icon">📅</span> Monthly View</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="export-btn" id="exportBtn">📥 Export CSV</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- DASHBOARD TAB -->
+            <section class="tab-content active" id="tab-dashboard">
+                <div class="page-header">
+                    <h1>Financial Dashboard</h1>
+                    <div class="month-selector">
+                        <select id="dashboardMonth"></select>
+                        <select id="dashboardYear"></select>
+                    </div>
+                </div>
+
+                <!-- Salary & Rule Summary -->
+                <div class="summary-cards">
+                    <div class="summary-card salary-card">
+                        <div class="card-label">Monthly Salary</div>
+                        <div class="card-value" id="dashSalary">₹37,600</div>
+                        <div class="card-sub">Net Income</div>
+                    </div>
+                    <div class="summary-card" style="--accent:#ef4444">
+                        <div class="card-label">Monthly EMIs</div>
+                        <div class="card-value" id="dashEmi">₹0</div>
+                        <div class="card-progress"><div class="progress-bar" id="emiBar" style="background:linear-gradient(90deg,#ef4444,#dc2626)"></div></div>
+                        <div class="card-sub"><span id="emiPct">0</span>% of salary</div>
+                    </div>
+                    <div class="summary-card needs-card">
+                        <div class="card-label">Needs (<span id="needsLbl">50</span>%)</div>
+                        <div class="card-value" id="dashNeeds">₹18,800</div>
+                        <div class="card-progress"><div class="progress-bar needs-bar" id="needsBar"></div></div>
+                        <div class="card-sub"><span id="needsSpent">₹0</span> spent</div>
+                    </div>
+                    <div class="summary-card wants-card">
+                        <div class="card-label">Wants (<span id="wantsLbl">30</span>%)</div>
+                        <div class="card-value" id="dashWants">₹11,280</div>
+                        <div class="card-progress"><div class="progress-bar wants-bar" id="wantsBar"></div></div>
+                        <div class="card-sub"><span id="wantsSpent">₹0</span> spent</div>
+                    </div>
+                    <div class="summary-card savings-card">
+                        <div class="card-label">Savings (<span id="savingsLbl">20</span>%)</div>
+                        <div class="card-value" id="dashSavings">₹7,520</div>
+                        <div class="card-progress"><div class="progress-bar savings-bar" id="savingsBar"></div></div>
+                        <div class="card-sub"><span id="savingsSpent">₹0</span> allocated</div>
+                    </div>
+                </div>
+
+                <!-- Fixed Expenses Overview -->
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>Fixed Monthly Expenses</h2>
+                        <div class="fixed-expenses-list" id="fixedExpensesList"></div>
+                        <div class="fixed-total">
+                            <span>Total Fixed</span>
+                            <span id="fixedTotal">₹0</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2>Budget vs Actual</h2>
+                        <canvas id="budgetChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>Category Breakdown</h2>
+                        <canvas id="categoryChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="card">
+                        <h2>Remaining Budget</h2>
+                        <div class="remaining-info" id="remainingInfo"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EXPENSES TAB -->
+            <section class="tab-content" id="tab-expenses">
+                <div class="page-header">
+                    <h1>Daily Expense Tracker</h1>
+                    <div style="display:flex;gap:10px">
+                        <button class="add-btn" id="addExpenseBtn">+ Add Expense</button>
+                        <button class="add-btn" id="deleteAllExpBtn" style="background:linear-gradient(135deg,#ef4444,#dc2626)">🗑️ Delete All</button>
+                    </div>
+                </div>
+
+                <!-- Add Expense Form -->
+                <div class="card expense-form" id="expenseForm" style="display:none;">
+                    <h2>New Expense</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="expDate">Date</label>
+                            <input type="date" id="expDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="expDesc">Description</label>
+                            <input type="text" id="expDesc" placeholder="e.g., Groceries">
+                        </div>
+                        <div class="form-group">
+                            <label for="expCategory">Category</label>
+                            <select id="expCategory">
+                                <option value="Life Infrastructure">Life Infrastructure</option>
+                                <option value="Future Me">Future Me</option>
+                                <option value="Performance & Growth">Performance & Growth</option>
+                                <option value="Relationships & Generosity">Relationships & Generosity</option>
+                                <option value="Lifestyle Enjoyment">Lifestyle Enjoyment</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="expAmount">Amount (₹)</label>
+                            <input type="number" id="expAmount" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="expPayment">Payment Mode</label>
+                            <select id="expPayment">
+                                <option value="UPI">UPI</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Debit Card">Debit Card</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="expType">Type</label>
+                            <select id="expType">
+                                <option value="Need">Need</option>
+                                <option value="Want">Want</option>
+                                <option value="Saving">Saving</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="expNote">Note</label>
+                            <input type="text" id="expNote" placeholder="Optional note">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-save" id="saveExpenseBtn">Save Expense</button>
+                        <button class="btn-cancel" id="cancelExpenseBtn">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Expense Filters -->
+                <div class="card filter-bar">
+                    <select id="filterMonth"></select>
+                    <select id="filterYear"></select>
+                    <select id="filterCategory">
+                        <option value="All">All Categories</option>
+                        <option value="Life Infrastructure">Life Infrastructure</option>
+                        <option value="Future Me">Future Me</option>
+                        <option value="Performance & Growth">Performance & Growth</option>
+                        <option value="Relationships & Generosity">Relationships & Generosity</option>
+                        <option value="Lifestyle Enjoyment">Lifestyle Enjoyment</option>
+                    </select>
+                    <select id="filterType">
+                        <option value="All">All Types</option>
+                        <option value="Need">Need</option>
+                        <option value="Want">Want</option>
+                        <option value="Saving">Saving</option>
+                    </select>
+                </div>
+
+                <!-- Expense Table -->
+                <div class="card table-container">
+                    <table class="expense-table" id="expenseTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllExp" title="Select All"></th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Type</th>
+                                <th>Note</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenseTableBody"></tbody>
+                    </table>
+                    <div class="table-empty" id="tableEmpty">No expenses recorded yet. Click "+ Add Expense" to start tracking.</div>
+                </div>
+
+                <!-- Bulk Edit Bar -->
+                <div class="card" id="bulkEditBar" style="display:none">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                        <span id="bulkCount" style="font-weight:600;color:var(--text-primary)">0 selected</span>
+                        <select id="bulkCategory" style="min-width:160px">
+                            <option value="">Change Category...</option>
+                            <option value="Life Infrastructure">Life Infrastructure</option>
+                            <option value="Future Me">Future Me</option>
+                            <option value="Performance &amp; Growth">Performance &amp; Growth</option>
+                            <option value="Relationships &amp; Generosity">Relationships &amp; Generosity</option>
+                            <option value="Lifestyle Enjoyment">Lifestyle Enjoyment</option>
+                        </select>
+                        <select id="bulkType" style="min-width:120px">
+                            <option value="">Change Type...</option>
+                            <option value="Need">Need</option>
+                            <option value="Want">Want</option>
+                            <option value="Saving">Saving</option>
+                        </select>
+                        <button class="btn-save" id="bulkApplyBtn" style="padding:8px 16px">Apply</button>
+                        <button class="btn-cancel" id="bulkCancelBtn" style="padding:8px 16px">Clear Selection</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BUDGET SETUP TAB -->
+            <section class="tab-content" id="tab-budget">
+                <div class="page-header">
+                    <h1>Budget Setup</h1>
+                    <p class="page-desc">Configure your salary and the 50-30-20 rule allocations</p>
+                </div>
+
+                <div class="card">
+                    <h2>Income & Allocation</h2>
+                    <div class="budget-setup-grid">
+                        <div class="form-group">
+                            <label for="setupSalary">Monthly Salary (₹)</label>
+                            <input type="number" id="setupSalary" value="37600">
+                        </div>
+                        <div class="form-group">
+                            <label for="setupNeeds">Needs %</label>
+                            <input type="number" id="setupNeeds" value="50" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="setupWants">Wants %</label>
+                            <input type="number" id="setupWants" value="30" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="setupSavings">Savings %</label>
+                            <input type="number" id="setupSavings" value="20" min="0" max="100">
+                        </div>
+                    </div>
+                    <div class="allocation-preview" id="allocationPreview"></div>
+                    <button class="btn-save" id="saveBudgetBtn">Save Budget</button>
+                </div>
+
+                <!-- EMI Burden in Budget -->
+                <div class="card" id="budgetEmiCard">
+                    <h2>📌 Monthly EMI Obligations</h2>
+                    <p class="card-desc">Auto-calculated from your EMI Tracker. The 50-30-20 split applies to salary <strong>after</strong> EMIs.</p>
+                    <div id="budgetEmiList"></div>
+                    <div class="fixed-total" style="margin-top:12px">
+                        <span>Total EMI Burden</span>
+                        <span id="budgetEmiTotal" style="color:#ef4444">₹0</span>
+                    </div>
+                    <div class="fixed-total" style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px">
+                        <span>Disposable Income (After EMIs)</span>
+                        <span id="budgetDisposable" style="color:#22c55e">₹0</span>
+                    </div>
+                </div>
+
+                <!-- Fixed Expenses Setup -->
+                <div class="card">
+                    <h2>Fixed Monthly Expenses</h2>
+                    <p class="card-desc">These are auto-added to each month's expenses</p>
+                    <div id="fixedExpensesSetup"></div>
+                    <button class="btn-add-fixed" id="addFixedBtn">+ Add Fixed Expense</button>
+                </div>
+            </section>
+
+            <!-- BIKE COSTS TAB -->
+            <section class="tab-content" id="tab-bike">
+                <div class="page-header">
+                    <h1>🏍️ Pulsar 125 — Ownership Cost</h1>
+                    <p class="page-desc">Data from your bike affordability calculator</p>
+                </div>
+
+                <div class="summary-cards">
+                    <div class="summary-card" style="--accent: #f59e0b;">
+                        <div class="card-label">EMI (2 yrs @ 16%)</div>
+                        <div class="card-value">₹3,839</div>
+                        <div class="card-sub">per month</div>
+                    </div>
+                    <div class="summary-card" style="--accent: #ef4444;">
+                        <div class="card-label">Fuel Cost</div>
+                        <div class="card-value">₹1,791</div>
+                        <div class="card-sub">1000km/mo @ 60km/L</div>
+                    </div>
+                    <div class="summary-card" style="--accent: #8b5cf6;">
+                        <div class="card-label">Insurance</div>
+                        <div class="card-value">₹240</div>
+                        <div class="card-sub">per month avg</div>
+                    </div>
+                    <div class="summary-card" style="--accent: #06b6d4;">
+                        <div class="card-label">Maintenance</div>
+                        <div class="card-value">₹958</div>
+                        <div class="card-sub">per month avg</div>
+                    </div>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>Cost Breakdown (8 Year Lifespan)</h2>
+                        <canvas id="bikeChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="card">
+                        <h2>Affordability Check</h2>
+                        <div class="afford-box">
+                            <div class="afford-badge yes">✅ Affordable</div>
+                            <div class="afford-detail">
+                                <div class="afford-row"><span>Monthly Ownership Cost</span><span class="afford-val">₹6,856</span></div>
+                                <div class="afford-row"><span>% of Monthly Income</span><span class="afford-val">11.1%</span></div>
+                                <div class="afford-row"><span>Affordability Threshold</span><span class="afford-val">&lt;15%</span></div>
+                                <div class="afford-row"><span>On-Road Price</span><span class="afford-val">₹98,273</span></div>
+                                <div class="afford-row"><span>Down Payment</span><span class="afford-val">₹19,865</span></div>
+                                <div class="afford-row"><span>Loan Amount</span><span class="afford-val">₹78,408</span></div>
+                                <div class="afford-row"><span>Total Interest</span><span class="afford-val">₹13,730</span></div>
+                                <div class="afford-row"><span>Total Buying Cost</span><span class="afford-val">₹1,12,003</span></div>
+                            </div>
+                        </div>
+                        <div class="bike-editable">
+                            <h3>Adjust Parameters</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="bikeEmi">Monthly EMI (₹)</label>
+                                    <input type="number" id="bikeEmi" value="3839">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bikeFuel">Monthly Fuel (₹)</label>
+                                    <input type="number" id="bikeFuel" value="1791">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bikeIns">Monthly Insurance (₹)</label>
+                                    <input type="number" id="bikeIns" value="240">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bikeMaint">Monthly Maintenance (₹)</label>
+                                    <input type="number" id="bikeMaint" value="958">
+                                </div>
+                            </div>
+                            <div class="bike-total">Total Monthly: <span id="bikeTotalMonthly">₹6,828</span></div>
+                            <button class="btn-save" id="saveBikeBtn">Update Bike Costs</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EMI TRACKER TAB -->
+            <section class="tab-content" id="tab-emi">
+                <div class="page-header">
+                    <h1>🏦 EMI Tracker</h1>
+                    <button class="add-btn" id="addEmiBtn">+ Add EMI</button>
+                </div>
+
+                <!-- Add EMI Form -->
+                <div class="card expense-form" id="emiForm" style="display:none;">
+                    <h2>New EMI</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="emiName">Loan Name</label>
+                            <input type="text" id="emiName" placeholder="e.g., Personal Loan">
+                        </div>
+                        <div class="form-group">
+                            <label for="emiAmount">EMI Amount (₹)</label>
+                            <input type="number" id="emiAmount" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="emiTotal">Total Loan Amount (₹)</label>
+                            <input type="number" id="emiTotal" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="emiRate">Interest Rate (%)</label>
+                            <input type="number" id="emiRate" step="0.1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="emiTenure">Tenure (months)</label>
+                            <input type="number" id="emiTenure" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="emiPaid">Months Paid</label>
+                            <input type="number" id="emiPaid" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="emiStart">Start Date</label>
+                            <input type="date" id="emiStart">
+                        </div>
+                        <div class="form-group">
+                            <label for="emiCategory">Category</label>
+                            <select id="emiCategory">
+                                <option value="Personal Loan">Personal Loan</option>
+                                <option value="Home Loan">Home Loan</option>
+                                <option value="Vehicle Loan">Vehicle Loan</option>
+                                <option value="Education Loan">Education Loan</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-save" id="saveEmiBtn">Save EMI</button>
+                        <button class="btn-cancel" id="cancelEmiBtn">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- EMI Summary Cards -->
+                <div class="summary-cards" id="emiSummaryCards"></div>
+
+                <!-- EMI Table -->
+                <div class="card table-container">
+                    <table class="expense-table" id="emiTable">
+                        <thead>
+                            <tr>
+                                <th>Loan</th>
+                                <th>Category</th>
+                                <th>EMI/Month</th>
+                                <th>Total Loan</th>
+                                <th>Rate</th>
+                                <th>Progress</th>
+                                <th>Remaining</th>
+                                <th>End Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emiTableBody"></tbody>
+                    </table>
+                    <div class="table-empty" id="emiTableEmpty">No EMIs added yet.</div>
+                </div>
+
+                <!-- EMI Charts -->
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>EMI Distribution</h2>
+                        <canvas id="emiDistChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="card">
+                        <h2>Monthly EMI Burden</h2>
+                        <div class="emi-burden" id="emiBurden"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BIKE AFFORDABILITY TAB -->
+            <section class="tab-content" id="tab-afford">
+                <div class="page-header">
+                    <h1>🧮 Bike Affordability — Real Analysis</h1>
+                    <p class="page-desc">Can you actually afford the Pulsar 125 based on your current spending?</p>
+                </div>
+
+                <!-- Affordability Verdict -->
+                <div class="card" id="affordVerdict"></div>
+
+                <!-- Income vs Obligations -->
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>Income Waterfall</h2>
+                        <div id="affordWaterfall"></div>
+                    </div>
+                    <div class="card">
+                        <h2>Expense Breakdown With Bike</h2>
+                        <canvas id="affordPieChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <!-- Scenario Analysis -->
+                <div class="card">
+                    <h2>📊 Scenario Comparison</h2>
+                    <p class="card-desc">Your finances without bike vs with bike</p>
+                    <canvas id="scenarioChart" width="800" height="300"></canvas>
+                </div>
+
+                <!-- Savings Impact -->
+                <div class="card">
+                    <h2>💡 Recommendations</h2>
+                    <div id="affordRecommendations"></div>
+                </div>
+            </section>
+
+            <!-- MONTHLY VIEW TAB -->
+            <section class="tab-content" id="tab-monthly">
+                <div class="page-header">
+                    <h1>Monthly Overview</h1>
+                    <div class="month-selector">
+                        <select id="monthlyMonth"></select>
+                        <select id="monthlyYear"></select>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Daily Spending Calendar</h2>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>Daily Spending Trend</h2>
+                        <canvas id="dailyTrendChart" width="400" height="250"></canvas>
+                    </div>
+                    <div class="card">
+                        <h2>Payment Mode Breakdown</h2>
+                        <canvas id="paymentChart" width="400" height="250"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATEMENT IMPORT TAB -->
+            <section class="tab-content" id="tab-statements">
+                <div class="page-header">
+                    <h1>📎 Import Bank / Credit Card Statements</h1>
+                    <p class="page-desc">Upload CSV files. Transactions get added to your Expenses tab.</p>
+                </div>
+
+                <!-- Upload Area -->
+                <div class="card">
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📄</div>
+                        <h3>Drag & Drop PDF or CSV file here</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="csvFileInput" accept=".csv,.txt,.pdf" style="display:none">
+                        <div class="upload-formats">Supports: PDF statements, Bank CSV, Credit Card CSV</div>
+                    </div>
+                </div>
+
+                <!-- PDF Processing Status -->
+                <div class="card" id="pdfStatusCard" style="display:none">
+                    <h2>🔄 Processing PDF...</h2>
+                    <div class="pdf-progress">
+                        <div class="card-progress" style="height:8px"><div class="progress-bar needs-bar" id="pdfProgressBar" style="width:0%"></div></div>
+                        <p id="pdfStatusText" style="margin-top:8px;color:var(--text-secondary);font-size:13px">Extracting text from pages...</p>
+                    </div>
+                </div>
+
+                <!-- PDF Extracted Transactions -->
+                <div class="card" id="pdfExtractCard" style="display:none">
+                    <h2>✅ Extracted Transactions</h2>
+                    <div class="preview-info" id="pdfExtractInfo"></div>
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label for="pdfStmtSource">Statement Source</label>
+                        <select id="pdfStmtSource">
+                            <option value="Bank">Bank Account</option>
+                            <option value="Credit Card">Credit Card</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="expense-table" id="pdfPreviewTable"><thead></thead><tbody></tbody></table>
+                    </div>
+                    <div style="margin-top:16px;display:flex;gap:12px">
+                        <button class="btn-save" id="pdfImportBtn">Import All Transactions</button>
+                        <button class="btn-cancel" id="pdfCancelBtn">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Column Mapping -->
+                <div class="card" id="columnMapCard" style="display:none">
+                    <h2>Map Columns</h2>
+                    <p class="card-desc">We auto-detected your columns. Adjust if needed.</p>
+                    <div class="preview-info" id="previewInfo"></div>
+                    <div class="form-grid" id="columnMapGrid"></div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label for="stmtSource">Statement Source</label>
+                        <select id="stmtSource">
+                            <option value="Bank">Bank Account</option>
+                            <option value="Credit Card">Credit Card</option>
+                        </select>
+                    </div>
+                    <button class="btn-save" id="importBtn" style="margin-top:16px">Import Transactions</button>
+                </div>
+
+                <!-- Preview Table -->
+                <div class="card" id="previewCard" style="display:none">
+                    <h2>Preview (first 10 rows)</h2>
+                    <div class="table-container">
+                        <table class="expense-table" id="previewTable"><thead></thead><tbody></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Import History -->
+                <div class="card">
+                    <h2>Import History</h2>
+                    <div id="importHistory"></div>
+                </div>
+            </section>
+
+            <!-- SPENDING PATTERNS TAB -->
+            <section class="tab-content" id="tab-patterns">
+                <div class="page-header">
+                    <h1>📈 Spending Patterns (3-Month Analysis)</h1>
+                    <p class="page-desc">Trends and insights from your transaction history</p>
+                </div>
+
+                <div class="summary-cards" id="patternSummaryCards"></div>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>Monthly Spending Trend</h2>
+                        <canvas id="monthlyTrendChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="card">
+                        <h2>Category Split (3 Months)</h2>
+                        <canvas id="categorySplitChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🔝 Top Spending Descriptions</h2>
+                    <p class="card-desc">Most frequent transaction descriptions across 3 months</p>
+                    <div id="topMerchants"></div>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <h2>Needs vs Wants vs Savings Trend</h2>
+                        <canvas id="typesTrendChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="card">
+                        <h2>Week-of-Month Spending</h2>
+                        <canvas id="weekOfMonthChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>💡 Spending Insights</h2>
+                    <div id="spendingInsights"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal" style="display:none;">
+        <div class="modal-box">
+            <h3>🗑️ Confirm Delete</h3>
+            <p id="deleteModalMsg">Are you sure you want to delete this item?</p>
+            <div class="modal-actions">
+                <button class="btn-save" id="confirmDeleteBtn" style="background:linear-gradient(135deg,#ef4444,#dc2626)">Yes, Delete</button>
+                <button class="btn-cancel" id="cancelDeleteBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="app.js"></script>
+    <script src="tabs-extra.js"></script>
+    <script src="tabs-import.js"></script>
+</body>
+</html>

@@ -112,8 +112,8 @@ function renderEmiTab() {
             const catColors = { 'Personal Loan': '#ec4899', 'Home Loan': '#6366f1', 'Vehicle Loan': '#f59e0b', 'Education Loan': '#06b6d4', 'Other': '#a855f7' };
             const color = catColors[e.category] || '#6366f1';
             return `<tr>
-                <td style="font-weight:600;color:var(--text-primary)">${e.name}</td>
-                <td><span style="color:${color};font-weight:600">${e.category}</span></td>
+                <td style="font-weight:600;color:var(--text-primary)">${escapeHTML(e.name)}</td>
+                <td><span style="color:${color};font-weight:600">${escapeHTML(e.category)}</span></td>
                 <td class="amount-cell">${fmt(e.amount)}</td>
                 <td>${fmt(e.totalLoan)}</td>
                 <td>${e.rate}%</td>
@@ -153,7 +153,7 @@ function renderEmiTab() {
         ${emis.map(e => {
             const remaining = e.tenure - e.paid;
             const totalLeft = e.amount * remaining;
-            return `<div class="remain-item"><span class="remain-label">${e.name} — ${remaining}mo left</span><span class="remain-value">${fmt(totalLeft)} total</span></div>`;
+            return `<div class="remain-item"><span class="remain-label">${escapeHTML(e.name)} — ${remaining}mo left</span><span class="remain-value">${fmt(totalLeft)} total</span></div>`;
         }).join('')}`;
 }
 

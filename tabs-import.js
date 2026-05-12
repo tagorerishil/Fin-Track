@@ -300,7 +300,7 @@ function showPDFPreview() {
     table.querySelector('thead').innerHTML = '<tr><th>Date</th><th>Description</th><th>Amount</th><th>Include</th></tr>';
     table.querySelector('tbody').innerHTML = pdfExtractedTxns.map((t, i) => `<tr>
         <td>${new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-        <td>${t.desc}</td>
+        <td>${escapeHTML(t.desc)}</td>
         <td class="amount-cell">${fmt(t.amount)}</td>
         <td><input type="checkbox" class="pdf-txn-check" data-idx="${i}" checked></td>
     </tr>`).join('');
@@ -359,7 +359,7 @@ function showColumnMapping() {
     card.style.display = 'block';
     document.getElementById('previewInfo').innerHTML = 
         `Found <strong>${parsedCSVData.length}</strong> data rows and <strong>${csvHeaders.length}</strong> columns.<br>
-         <span style="color:var(--text-muted);font-size:12px">Detected headers: ${csvHeaders.join(' | ')}</span>`;
+         <span style="color:var(--text-muted);font-size:12px">Detected headers: ${escapeHTML(csvHeaders.join(' | '))}</span>`;
 
     const grid = document.getElementById('columnMapGrid');
     const fields = [
@@ -375,7 +375,7 @@ function showColumnMapping() {
             <label>${f.label} ${f.required ? '<span style="color:#ef4444">*</span>' : ''}</label>
             <select id="map_${f.key}">
                 <option value="-1">-- Skip --</option>
-                ${csvHeaders.map((h, i) => `<option value="${i}" ${columnMapping[f.key] === i ? 'selected' : ''}>[${i+1}] ${h}</option>`).join('')}
+                ${csvHeaders.map((h, i) => `<option value="${i}" ${columnMapping[f.key] === i ? 'selected' : ''}>[${i+1}] ${escapeHTML(h)}</option>`).join('')}
             </select>
         </div>`).join('');
 
@@ -414,9 +414,9 @@ function showPreview() {
     const card = document.getElementById('previewCard');
     card.style.display = 'block';
     const table = document.getElementById('previewTable');
-    table.querySelector('thead').innerHTML = '<tr>' + csvHeaders.map((h, i) => `<th>[${i+1}] ${h}</th>`).join('') + '</tr>';
+    table.querySelector('thead').innerHTML = '<tr>' + csvHeaders.map((h, i) => `<th>[${i+1}] ${escapeHTML(h)}</th>`).join('') + '</tr>';
     table.querySelector('tbody').innerHTML = parsedCSVData.slice(0, 10).map(row => 
-        '<tr>' + row.map(c => `<td>${c}</td>`).join('') + '</tr>'
+        '<tr>' + row.map(c => `<td>${escapeHTML(c)}</td>`).join('') + '</tr>'
     ).join('');
 }
 
@@ -559,7 +559,7 @@ function renderStatementsTab() {
         container.innerHTML = history.slice().reverse().map(h => `
             <div class="import-item">
                 <div>
-                    <strong>${h.source}</strong> — ${h.file}
+                    <strong>${escapeHTML(h.source)}</strong> — ${escapeHTML(h.file)}
                     <div class="import-meta">${new Date(h.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
                 <span class="import-count">${h.count} transactions</span>
@@ -664,7 +664,7 @@ function renderPatternsTab() {
         <div class="merchant-item">
             <div class="merchant-rank">${i + 1}</div>
             <div class="merchant-info">
-                <div class="merchant-name">${m.name}</div>
+                <div class="merchant-name">${escapeHTML(m.name)}</div>
                 <div class="merchant-freq">${m.count} time${m.count > 1 ? 's' : ''}</div>
             </div>
             <div class="merchant-total">${fmt(m.total)}</div>
@@ -711,10 +711,10 @@ function renderPatternsTab() {
     const m2 = monthData[2]?.expenses.reduce((s, e) => s + e.amount, 0) || 0;
     if (m0 > 0 && m2 > m0) {
         const pct = (((m2 - m0) / m0) * 100).toFixed(0);
-        insights.push({ icon: '📈', text: `Spending increased by ${pct}% from ${monthData[0].label} to ${monthData[2].label}.`, color: '#ef4444' });
+        insights.push({ icon: '📈', text: `Spending increased by ${pct}% from ${escapeHTML(monthData[0].label)} to ${escapeHTML(monthData[2].label)}.`, color: '#ef4444' });
     } else if (m0 > 0 && m2 < m0) {
         const pct = (((m0 - m2) / m0) * 100).toFixed(0);
-        insights.push({ icon: '📉', text: `Spending decreased by ${pct}% from ${monthData[0].label} to ${monthData[2].label}. Great job!`, color: '#22c55e' });
+        insights.push({ icon: '📉', text: `Spending decreased by ${pct}% from ${escapeHTML(monthData[0].label)} to ${escapeHTML(monthData[2].label)}. Great job!`, color: '#22c55e' });
     }
 
     const needsTotal = allExps.filter(e => e.type === 'Need').reduce((s, e) => s + e.amount, 0);
@@ -731,11 +731,12 @@ function renderPatternsTab() {
     }
 
     if (sorted.length > 0) {
-        insights.push({ icon: '🏪', text: `Your biggest expense category is "${sorted[0].name}" at ${fmt(sorted[0].total)} over 3 months.`, color: '#a855f7' });
+        insights.push({ icon: '🏪', text: `Your biggest expense category is "${escapeHTML(sorted[0].name)}" at ${fmt(sorted[0].total)} over 3 months.`, color: '#a855f7' });
     }
 
     document.getElementById('spendingInsights').innerHTML = insights.length > 0 
         ? '<div style="display:grid;gap:8px;">' + insights.map(i => 
+            // Note: i.text now contains escaped strings where needed
             `<div class="remain-item" style="border-left:3px solid ${i.color}"><span class="remain-label">${i.icon} ${i.text}</span></div>`
         ).join('') + '</div>'
         : '<div class="table-empty">Add more expense data to see insights.</div>';

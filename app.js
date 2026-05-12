@@ -2,6 +2,18 @@
 let _idCounter = Date.now();
 function uid() { return 'e' + (_idCounter++); }
 
+// ===== SECURITY ENHANCEMENT =====
+// Sanitize user input to prevent Cross-Site Scripting (XSS)
+window.escapeHTML = function(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
 const DEFAULT_DATA = {
     salary: 0,
     needsPct: 50, wantsPct: 30, savingsPct: 20,
@@ -132,7 +144,7 @@ function renderDashboard() {
     const fixedList = document.getElementById('fixedExpensesList');
     fixedList.innerHTML = DATA.fixedExpenses.map(f => `
         <div class="fixed-item">
-            <div><span class="fixed-item-name">${f.name}</span><span class="fixed-item-type type-${f.type.toLowerCase()}">${f.type}</span></div>
+            <div><span class="fixed-item-name">${escapeHTML(f.name)}</span><span class="fixed-item-type type-${escapeHTML(f.type).toLowerCase()}">${escapeHTML(f.type)}</span></div>
             <span class="fixed-item-amount">${fmt(f.amount)}</span>
         </div>`).join('');
     const fixedTotal = DATA.fixedExpenses.reduce((s, f) => s + f.amount, 0);
@@ -249,11 +261,11 @@ function renderExpenses() {
         return `<tr>
             <td><input type="checkbox" class="exp-check" data-id="${e.id}"></td>
             <td>${new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
-            <td>${e.desc}</td><td>${e.category}</td>
+            <td>${escapeHTML(e.desc)}</td><td>${escapeHTML(e.category)}</td>
             <td class="amount-cell">${fmt(e.amount)}</td>
-            <td>${e.payment}</td>
-            <td><span class="type-badge ${typeClass}">${e.type}</span></td>
-            <td>${e.note || '-'}</td>
+            <td>${escapeHTML(e.payment)}</td>
+            <td><span class="type-badge ${typeClass}">${escapeHTML(e.type)}</span></td>
+            <td>${escapeHTML(e.note) || '-'}</td>
             <td><button class="btn-edit" onclick="editExpense('${e.id}')">✏️</button><button class="btn-delete" onclick="deleteExpense('${e.id}')">🗑️</button></td>
         </tr>`;
     }).join('');
@@ -321,7 +333,7 @@ window.deleteExpense = function(id) {
     pendingDeleteType = 'expense';
     const exp = DATA.expenses.find(x => x.id === id);
     document.getElementById('deleteModalMsg').textContent = 
-        `Delete "${exp ? exp.desc : 'this expense'}"? This cannot be undone.`;
+        `Delete "${exp ? exp.desc : 'this expense'}"? This cannot be undone.`; // textContent is safe
     deleteModal.style.display = 'flex';
 };
 
@@ -359,7 +371,7 @@ function renderBudgetEmiSection() {
     document.getElementById('budgetEmiList').innerHTML = emis.length > 0
         ? emis.map(e => `
             <div class="fixed-item">
-                <div><span class="fixed-item-name">${e.name}</span><span class="fixed-item-type" style="background:rgba(239,68,68,0.15);color:#ef4444">EMI</span></div>
+                <div><span class="fixed-item-name">${escapeHTML(e.name)}</span><span class="fixed-item-type" style="background:rgba(239,68,68,0.15);color:#ef4444">EMI</span></div>
                 <span class="fixed-item-amount">${fmt(e.amount)}</span>
             </div>`).join('')
         : '<div class="table-empty" style="padding:12px">No EMIs added. Go to EMI Tracker to add.</div>';
@@ -400,7 +412,7 @@ function renderFixedSetup() {
     const cont = document.getElementById('fixedExpensesSetup');
     cont.innerHTML = DATA.fixedExpenses.map((f, i) => `
         <div class="fixed-setup-item">
-            <input type="text" value="${f.name}" data-idx="${i}" data-field="name" class="fixed-input" placeholder="Name">
+            <input type="text" value="${escapeHTML(f.name)}" data-idx="${i}" data-field="name" class="fixed-input" placeholder="Name">
             <input type="number" value="${f.amount}" data-idx="${i}" data-field="amount" class="fixed-input" placeholder="Amount">
             <select data-idx="${i}" data-field="type" class="fixed-input">
                 <option value="Need" ${f.type==='Need'?'selected':''}>Need</option>
